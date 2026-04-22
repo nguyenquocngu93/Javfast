@@ -1,0 +1,145 @@
+// Route /configure (đã sửa để nhận query params trực tiếp)
+if (pathname === '/configure') {
+    const baseUrl = `http://${req.headers.host}`;
+    const query = parsedUrl.query;
+    
+    // Ưu tiên lấy cấu hình từ query params trực tiếp (nếu có)
+    let formEnabled = torrServerEnabled;
+    let formAddress = torrServerAddress || 'http://192.168.1.10:8090';
+    
+    if (query.tsEnabled !== undefined) {
+        formEnabled = query.tsEnabled === 'true';
+        if (query.tsAddress) {
+            // Giải mã URL (có thể bị encode 1 hoặc 2 lần)
+            let addr = decodeURIComponent(query.tsAddress);
+            // Nếu vẫn còn dạng http%3A... thì decode tiếp
+            if (addr.includes('%')) addr = decodeURIComponent(addr);
+            formAddress = addr;
+        }
+    } else if (query.manifestUrl) {
+        // Fallback: parse từ manifestUrl (cách cũ)
+        try {
+            const mf = new URL(query.manifestUrl);
+            if (mf.searchParams.get('tsEnabled') === 'true') {
+                formEnabled = true;
+                const addr = mf.searchParams.get('tsAddress');
+                if (addr) formAddress = decodeURIComponent(addr);
+            }
+        } catch (e) {}
+    }
+    
+    res.setHeader('Content-Type', 'text/html; charset=utf-8');
+    res.end(`
+<!DOCTYPE html>
+<html lang="vi">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>🎌 JAV Addon · Cấu hình</title>
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&display=swap" rel="stylesheet">
+    <style>
+        * { margin: 0; padding: 0; box-sizing: border-box; }
+        body { font-family: 'Inter', sans-serif; background: #0b0b12; display: flex; align-items: center; justify-content: center; min-height: 100vh; padding: 20px; color: #e9e9f0; }
+        .card { max-width: 560px; width: 100%; background: rgba(22, 25, 35, 0.9); backdrop-filter: blur(8px); -webkit-backdrop-filter: blur(8px); border: 1px solid rgba(255, 255, 255, 0.06); border-radius: 28px; padding: 32px 28px; box-shadow: 0 25px 40px -10px rgba(0, 0, 0, 0.6); }
+        .header { display: flex; align-items: center; gap: 12px; margin-bottom: 28px; }
+        .icon { width: 48px; height: 48px; background: linear-gradient(145deg, #e94560, #b8304f); border-radius: 16px; display: flex; align-items: center; justify-content: center; font-size: 26px; box-shadow: 0 8px 16px rgba(233, 69, 96, 0.2); }
+        h1 { font-size: 26px; font-weight: 700; letter-spacing: -0.5px; background: linear-gradient(to right, #ffffff, #c0c0e0); -webkit-background-clip: text; background-clip: text; color: transparent; }
+        .subtitle { font-size: 14px; color: #8a8aa8; margin-top: -6px; margin-bottom: 28px; border-left: 3px solid #e94560; padding-left: 16px; }
+        .feature-grid { display: grid; grid-template-columns: 1fr 1fr; gap: 12px; margin-bottom: 28px; }
+        .feature-item { background: rgba(255, 255, 255, 0.03); border: 1px solid rgba(255, 255, 255, 0.05); border-radius: 18px; padding: 16px 14px; }
+        .feature-title { font-weight: 600; font-size: 15px; margin-bottom: 6px; display: flex; align-items: center; gap: 6px; }
+        .feature-desc { font-size: 12px; color: #a0a0c0; line-height: 1.4; }
+        .config-section { background: rgba(0, 0, 0, 0.2); border-radius: 22px; padding: 22px 20px; margin-bottom: 24px; border: 1px solid #232334; }
+        .switch-row { display: flex; align-items: center; justify-content: space-between; margin-bottom: 20px; }
+        .switch-label { font-weight: 600; font-size: 16px; }
+        .switch-label small { display: block; font-weight: 400; font-size: 12px; color: #8a8aa8; margin-top: 4px; }
+        .switch { position: relative; display: inline-block; width: 52px; height: 28px; }
+        .switch input { opacity: 0; width: 0; height: 0; }
+        .slider { position: absolute; cursor: pointer; top: 0; left: 0; right: 0; bottom: 0; background-color: #2a2a40; transition: .2s; border-radius: 34px; }
+        .slider:before { position: absolute; content: ""; height: 22px; width: 22px; left: 3px; bottom: 3px; background-color: white; transition: .2s; border-radius: 50%; }
+        input:checked + .slider { background: linear-gradient(145deg, #e94560, #b8304f); }
+        input:checked + .slider:before { transform: translateX(24px); }
+        .input-group { margin-top: 8px; }
+        .input-group label { display: block; font-size: 13px; font-weight: 500; margin-bottom: 8px; color: #b0b0d0; }
+        .input-field { width: 100%; padding: 14px 18px; background: #0f0f1a; border: 1.5px solid #2a2a45; border-radius: 20px; font-size: 14px; color: #fff; outline: none; font-family: 'Inter', monospace; }
+        .input-field:focus { border-color: #e94560; box-shadow: 0 0 0 3px rgba(233, 69, 96, 0.15); }
+        .url-box { background: #0b0b16; border: 1px dashed #4a4a70; border-radius: 18px; padding: 18px; margin: 24px 0 20px; word-break: break-all; font-family: 'SF Mono', 'Menlo', monospace; font-size: 13px; color: #b0d0ff; }
+        .button-group { display: flex; gap: 12px; }
+        .btn { flex: 1; padding: 16px 0; border: none; border-radius: 40px; font-weight: 600; font-size: 16px; cursor: pointer; background: #232338; color: #e0e0f0; border: 1px solid #3a3a60; }
+        .btn-primary { background: linear-gradient(145deg, #e94560, #c02b4a); border: none; color: white; box-shadow: 0 10px 18px -6px rgba(233, 69, 96, 0.3); }
+        .note { margin-top: 20px; font-size: 12px; color: #70708c; text-align: center; }
+    </style>
+</head>
+<body>
+    <div class="card">
+        <div class="header">
+            <div class="icon">🎌</div>
+            <h1>JAV Addon</h1>
+        </div>
+        <div class="subtitle">Cấu hình TorrServer · OneJAV + Sukebei + Knaben</div>
+        <div class="feature-grid">
+            <div class="feature-item"><div class="feature-title">🔍 Tìm kiếm</div><div class="feature-desc">Tìm trực tiếp trên OneJAV, trả kết quả nhanh.</div></div>
+            <div class="feature-item"><div class="feature-title">🏷️ 17 Tags</div><div class="feature-desc">Big Tits, Creampie, Anal, Uncensored...</div></div>
+            <div class="feature-item"><div class="feature-title">🧲 Đa nguồn</div><div class="feature-desc">Knaben, Sukebei, OneJAV torrents.</div></div>
+            <div class="feature-item"><div class="feature-title">📡 TorrServer</div><div class="feature-desc">Phát trực tiếp qua HTTP, giảm lag.</div></div>
+        </div>
+        <div class="config-section">
+            <div class="switch-row">
+                <div class="switch-label">⚡ TorrServer <small>Phát torrent qua HTTP streaming</small></div>
+                <label class="switch"><input type="checkbox" id="ts" \${formEnabled ? 'checked' : ''}><span class="slider"></span></label>
+            </div>
+            <div class="input-group">
+                <label>🌐 Địa chỉ TorrServer</label>
+                <input type="url" id="addr" class="input-field" value="\${formAddress.replace(/"/g, '&quot;')}" placeholder="http://192.168.1.10:8090" spellcheck="false">
+            </div>
+        </div>
+        <button class="btn btn-primary" onclick="generateAndShow()">✨ Tạo link cài đặt</button>
+        <div id="urlContainer" style="display: none;">
+            <div class="url-box" id="urlText"></div>
+            <div class="button-group">
+                <button class="btn btn-secondary" onclick="copyUrl()">📋 Copy Link</button>
+                <button class="btn btn-primary" onclick="installAddon()">💾 Cài vào Stremio</button>
+            </div>
+        </div>
+        <div class="note">Link chứa cấu hình TorrServer. Cài đặt xong, chọn phim và stream sẽ tự động thêm vào TS.</div>
+    </div>
+    <script>
+        const baseManifest = '\${baseUrl}/manifest.json';
+        let currentUrl = '';
+        
+        function generateManifestUrl() {
+            const enabled = document.getElementById('ts').checked;
+            const address = document.getElementById('addr').value.trim();
+            const params = new URLSearchParams();
+            if (enabled) {
+                params.set('tsEnabled', 'true');
+                params.set('tsAddress', encodeURIComponent(address));
+            } else {
+                params.set('tsEnabled', 'false');
+            }
+            return baseManifest + '?' + params.toString();
+        }
+        
+        function generateAndShow() {
+            currentUrl = generateManifestUrl();
+            document.getElementById('urlText').textContent = currentUrl;
+            document.getElementById('urlContainer').style.display = 'block';
+        }
+        
+        function copyUrl() {
+            if (!currentUrl) generateAndShow();
+            navigator.clipboard?.writeText(currentUrl).then(() => alert('✅ Đã copy link!')).catch(() => prompt('📋 Copy thủ công:', currentUrl));
+        }
+        
+        function installAddon() {
+            if (!currentUrl) generateAndShow();
+            location.href = 'stremio://' + currentUrl.replace(/^https?:\\/\\//, '');
+        }
+        
+        window.onload = generateAndShow;
+    </script>
+</body>
+</html>
+    `);
+    return;
+}

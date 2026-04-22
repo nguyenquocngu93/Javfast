@@ -1,0 +1,23 @@
+{
+  "id": "community.onejav",
+  "version": "1.0.0",
+  "name": "OneJAV Search",
+  "description": "Tìm kiếm video từ OneJAV.com",
+  "logo": "https://onejav.com/favicon.ico",
+  "resources": ["catalog", "meta", "stream"],
+  "types": ["movie"],
+  "catalogs": [
+    {
+      "id": "onejav_search",
+      "type": "movie",
+      "name": "OneJAV",
+      "extra": [
+        {
+          "name": "search",
+          "isRequired": true
+        }
+      ]
+    }
+  ],
+  "idPrefixes": ["onejav"]
+}
