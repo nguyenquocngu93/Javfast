@@ -214,6 +214,7 @@ const manifest = {
         { type: 'Javfast', id: 'jav-tag-4k', name: '🎌 4K', extra: [{ name: 'skip' }] },
         { type: 'Javfast', id: 'jav-tag-breast-milk', name: '🎌 Breast Milk', extra: [{ name: 'skip' }] },
         { type: 'Javfast', id: 'jav-tag-huge-butt', name: '🎌 Huge Butt', extra: [{ name: 'skip' }] },
+{ type: 'Javfast', id: 'jav-tag-small-tits', name: '🎌 Small Tits', extra: [{ name: 'skip' }] },        { type: 'Javfast', id: 'jav-tag-deep-throating', name: '🎌 Deep Throating', extra: [{ name: 'skip' }] },        { type: 'Javfast', id: 'jav-tag-married-woman', name: '🎌 Married Woman', extra: [{ name: 'skip' }] },        { type: 'Javfast', id: 'jav-tag-humiliation', name: '🎌 Humiliation', extra: [{ name: 'skip' }] },        { type: 'Javfast', id: 'jav-tag-female-warrior', name: '🎌 Female Warrior', extra: [{ name: 'skip' }] },        { type: 'Javfast', id: 'jav-tag-bitch', name: '🎌 Bitch', extra: [{ name: 'skip' }] },        { type: 'Javfast', id: 'jav-tag-bukkake', name: '🎌 Bukkake', extra: [{ name: 'skip' }] },
         { type: 'Javfast', id: 'jav-tag-piss-drinking', name: '🎌 Piss Drinking', extra: [{ name: 'skip' }] }
     ]
 };
@@ -524,7 +525,7 @@ const server = http.createServer((req, res) => {
         <div class="subtitle">⚡ OneJAV + Sukebei + iJavTorrent · Cân bằng</div>
         <div class="feature-grid">
             <div class="feature-item"><div class="feature-title">🔍 Tìm kiếm</div><div class="feature-desc">Tìm trực tiếp trên OneJAV.</div></div>
-            <div class="feature-item"><div class="feature-title">🏷️ 17 Tags</div><div class="feature-desc">Big Tits, Creampie, Anal...</div></div>
+            <div class="feature-item"><div class="feature-title">🏷️ Nhiều Tags</div><div class="feature-desc">Big Tits, Creampie, Anal...</div></div>
             <div class="feature-item"><div class="feature-title">🧲 Đa nguồn</div><div class="feature-desc">iJavTorrent, Sukebei, OneJAV.</div></div>
             <div class="feature-item"><div class="feature-title">⚖️ Cân bằng</div><div class="feature-desc">Retry 2 lần, không bỏ magnet.</div></div>
         </div>
