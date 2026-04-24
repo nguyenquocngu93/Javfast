@@ -265,7 +265,7 @@ builder.defineCatalogHandler(async (args) => {
         const paged = results.slice(skip, skip + ITEMS_PER_PAGE);
         const metas = paged.map(item => ({
             id: item.id,
-            type: 'Movie',
+            type: 'movie',
             name: item.title,
             poster: item.poster || BASE_URL + '/favicon.ico',
             genres: ['JAV']
@@ -283,7 +283,7 @@ builder.defineCatalogHandler(async (args) => {
         }
         const paged = all.slice(skip, skip + ITEMS_PER_PAGE);
         const metas = paged.map(item => ({
-            id: item.id, type: 'Movie', name: item.title,
+            id: item.id, type: 'movie', name: item.title,
             poster: item.poster || BASE_URL + '/favicon.ico', genres: ['JAV']
         }));
         return { metas, hasMore: all.length > skip + ITEMS_PER_PAGE };
@@ -301,7 +301,7 @@ builder.defineCatalogHandler(async (args) => {
     const start = skip % ITEMS_PER_PAGE;
     const paged = data.results.slice(start, start + ITEMS_PER_PAGE);
     const metas = paged.map(item => ({
-        id: item.id, type: 'Movie', name: item.title,
+        id: item.id, type: 'movie', name: item.title,
         poster: item.poster || BASE_URL + '/favicon.ico', genres: ['JAV']
     }));
     return { metas, hasMore: (data.results.length > start + ITEMS_PER_PAGE) || data.hasMore };
