@@ -1,0 +1,144 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>🎌 JAV Addon · Configuration</title>
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&display=swap" rel="stylesheet">
+    <style>
+        * { margin: 0; padding: 0; box-sizing: border-box; }
+        body {
+            font-family: 'Inter', sans-serif;
+            background: linear-gradient(135deg, #fce4ec, #f8bbd0);
+            display: flex; align-items: center; justify-content: center;
+            min-height: 100vh; padding: 20px; color: #333;
+        }
+        .card {
+            max-width: 600px; width: 100%;
+            background: rgba(255,255,255,0.95); backdrop-filter: blur(10px);
+            border-radius: 24px; padding: 30px 25px;
+            box-shadow: 0 20px 40px rgba(233,30,99,0.2);
+            border: 1px solid rgba(233,30,99,0.1);
+        }
+        .header { display: flex; align-items: center; gap: 10px; margin-bottom: 20px; }
+        .icon {
+            width: 50px; height: 50px;
+            background: linear-gradient(145deg, #e91e63, #c2185b);
+            border-radius: 14px; display: flex; align-items: center; justify-content: center;
+            font-size: 28px; color: white;
+        }
+        h1 { font-size: 24px; font-weight: 700; color: #880e4f; }
+        .subtitle { color: #ad1457; margin-bottom: 20px; font-size: 14px; }
+        .config-section {
+            background: #fff0f5; border-radius: 16px; padding: 20px; margin-bottom: 20px;
+        }
+        .switch-row { display: flex; align-items: center; justify-content: space-between; margin-bottom: 15px; }
+        .switch-label { font-weight: 600; color: #880e4f; }
+        .switch-label small { display: block; font-weight: 400; font-size: 12px; color: #ad1457; }
+        .switch { position: relative; display: inline-block; width: 50px; height: 26px; }
+        .switch input { opacity: 0; width: 0; height: 0; }
+        .slider {
+            position: absolute; cursor: pointer; top: 0; left: 0; right: 0; bottom: 0;
+            background-color: #ccc; transition: .3s; border-radius: 34px;
+        }
+        .slider:before {
+            position: absolute; content: ""; height: 20px; width: 20px;
+            left: 3px; bottom: 3px; background-color: white; transition: .3s; border-radius: 50%;
+        }
+        input:checked + .slider { background-color: #e91e63; }
+        input:checked + .slider:before { transform: translateX(24px); }
+        .input-group { margin-top: 10px; }
+        .input-group label { font-size: 13px; font-weight: 500; color: #ad1457; }
+        .input-field {
+            width: 100%; padding: 12px; margin-top: 5px;
+            border: 1px solid #f06292; border-radius: 10px; font-size: 14px; background: white;
+        }
+        .url-box {
+            background: #fce4ec; border: 1px dashed #e91e63; border-radius: 12px;
+            padding: 15px; margin: 20px 0; word-break: break-all;
+            font-family: monospace; color: #880e4f;
+        }
+        .btn {
+            padding: 12px; border: none; border-radius: 30px; font-weight: 600;
+            cursor: pointer; width: 100%; margin-bottom: 10px;
+            background: #e91e63; color: white;
+        }
+        .btn-secondary { background: #f8bbd0; color: #880e4f; }
+        .btn:hover { filter: brightness(1.1); }
+        .note { font-size: 12px; color: #ad1457; text-align: center; }
+    </style>
+</head>
+<body>
+    <div class="card">
+        <div class="header">
+            <div class="icon">🎌</div>
+            <h1>JAV Addon <span style="font-size:14px;">v6.0.1</span></h1>
+        </div>
+        <div class="subtitle">Configure TorrServer · OneJAV + Sukebei + iJavTorrent</div>
+
+        <div class="config-section">
+            <div class="switch-row">
+                <div class="switch-label">
+                    ⚡ TorrServer
+                    <small>Enable HTTP streaming</small>
+                </div>
+                <label class="switch">
+                    <input type="checkbox" id="ts" __TS_CHECKED__>
+                    <span class="slider"></span>
+                </label>
+            </div>
+            <div class="input-group">
+                <label>🌐 TorrServer Address</label>
+                <input type="url" id="addr" class="input-field" value="__TS_ADDR__" placeholder="http://192.168.1.10:8090">
+            </div>
+        </div>
+
+        <button class="btn" onclick="generateAndShow()">✨ Generate Install Link</button>
+
+        <div id="urlContainer" style="display: none;">
+            <div class="url-box" id="urlText"></div>
+            <div style="display: flex; gap: 10px;">
+                <button class="btn-secondary" onclick="copyUrl()" style="flex:1;">📋 Copy</button>
+                <button class="btn" onclick="installAddon()" style="flex:1;">💾 Install</button>
+            </div>
+        </div>
+        <div class="note">After installing, select a movie and stream will be automatically added to TorrServer.</div>
+    </div>
+
+    <script>
+        const baseManifest = '__BASE_URL__/manifest.json';
+        let currentUrl = '';
+
+        function generateManifestUrl() {
+            const enabled = document.getElementById('ts').checked;
+            const address = document.getElementById('addr').value.trim();
+            const params = new URLSearchParams();
+            if (enabled) {
+                params.set('tsEnabled', 'true');
+                params.set('tsAddress', encodeURIComponent(address));
+            } else {
+                params.set('tsEnabled', 'false');
+            }
+            return baseManifest + '?' + params.toString();
+        }
+
+        function generateAndShow() {
+            currentUrl = generateManifestUrl();
+            document.getElementById('urlText').textContent = currentUrl;
+            document.getElementById('urlContainer').style.display = 'block';
+        }
+
+        function copyUrl() {
+            if (!currentUrl) generateAndShow();
+            navigator.clipboard?.writeText(currentUrl).then(() => alert('✅ Copied!'));
+        }
+
+        function installAddon() {
+            if (!currentUrl) generateAndShow();
+            location.href = 'stremio://' + currentUrl.replace(/^https?:\\/\\//, '');
+        }
+
+        window.onload = generateAndShow;
+    </script>
+</body>
+</html>

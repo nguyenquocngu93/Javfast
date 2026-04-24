@@ -17,8 +17,8 @@ const PORT = process.env.PORT || 7006;
 const ITEMS_PER_PAGE = 10;
 
 // ===================== CẤU HÌNH TOÀN CỤC =====================
-let torrServerEnabled = true;
-let torrServerAddress = 'http://gren439e.tsarea.tv:8880';
+let torrServerEnabled = false;               // Không dùng TorrServer mặc định
+let torrServerAddress = '';                 // Người dùng tự điền
 
 // ===================== HTTP REQUEST HELPER =====================
 function httpRequest(url, options = {}) {
@@ -188,7 +188,7 @@ const manifest = {
     id: 'com.jav.addon.v6',
     version: '6.0.1',
     name: '🎌 JAV Addon',
-    description: 'OneJAV + Sukebei + iJavTorrent + TorrServer',
+    description: 'OneJAV + Sukebei + iJavTorrent + TorrServer (tự chọn)',
     resources: ['catalog', 'meta', 'stream'],
     types: ['Javfast', 'movie'],
     idPrefixes: ['onejav_'],
@@ -214,7 +214,13 @@ const manifest = {
         { type: 'Javfast', id: 'jav-tag-4k', name: '🎌 4K', extra: [{ name: 'skip' }] },
         { type: 'Javfast', id: 'jav-tag-breast-milk', name: '🎌 Breast Milk', extra: [{ name: 'skip' }] },
         { type: 'Javfast', id: 'jav-tag-huge-butt', name: '🎌 Huge Butt', extra: [{ name: 'skip' }] },
-{ type: 'Javfast', id: 'jav-tag-small-tits', name: '🎌 Small Tits', extra: [{ name: 'skip' }] },        { type: 'Javfast', id: 'jav-tag-deep-throating', name: '🎌 Deep Throating', extra: [{ name: 'skip' }] },        { type: 'Javfast', id: 'jav-tag-married-woman', name: '🎌 Married Woman', extra: [{ name: 'skip' }] },        { type: 'Javfast', id: 'jav-tag-humiliation', name: '🎌 Humiliation', extra: [{ name: 'skip' }] },        { type: 'Javfast', id: 'jav-tag-female-warrior', name: '🎌 Female Warrior', extra: [{ name: 'skip' }] },        { type: 'Javfast', id: 'jav-tag-bitch', name: '🎌 Bitch', extra: [{ name: 'skip' }] },        { type: 'Javfast', id: 'jav-tag-bukkake', name: '🎌 Bukkake', extra: [{ name: 'skip' }] },
+        { type: 'Javfast', id: 'jav-tag-small-tits', name: '🎌 Small Tits', extra: [{ name: 'skip' }] },
+        { type: 'Javfast', id: 'jav-tag-deep-throating', name: '🎌 Deep Throating', extra: [{ name: 'skip' }] },
+        { type: 'Javfast', id: 'jav-tag-married-woman', name: '🎌 Married Woman', extra: [{ name: 'skip' }] },
+        { type: 'Javfast', id: 'jav-tag-humiliation', name: '🎌 Humiliation', extra: [{ name: 'skip' }] },
+        { type: 'Javfast', id: 'jav-tag-female-warrior', name: '🎌 Female Warrior', extra: [{ name: 'skip' }] },
+        { type: 'Javfast', id: 'jav-tag-bitch', name: '🎌 Bitch', extra: [{ name: 'skip' }] },
+        { type: 'Javfast', id: 'jav-tag-bukkake', name: '🎌 Bukkake', extra: [{ name: 'skip' }] },
         { type: 'Javfast', id: 'jav-tag-piss-drinking', name: '🎌 Piss Drinking', extra: [{ name: 'skip' }] }
     ]
 };
@@ -259,7 +265,7 @@ builder.defineCatalogHandler(async (args) => {
         const paged = results.slice(skip, skip + ITEMS_PER_PAGE);
         const metas = paged.map(item => ({
             id: item.id,
-            type: 'movie',
+            type: 'Movie',
             name: item.title,
             poster: item.poster || BASE_URL + '/favicon.ico',
             genres: ['JAV']
@@ -277,7 +283,7 @@ builder.defineCatalogHandler(async (args) => {
         }
         const paged = all.slice(skip, skip + ITEMS_PER_PAGE);
         const metas = paged.map(item => ({
-            id: item.id, type: 'movie', name: item.title,
+            id: item.id, type: 'Movie', name: item.title,
             poster: item.poster || BASE_URL + '/favicon.ico', genres: ['JAV']
         }));
         return { metas, hasMore: all.length > skip + ITEMS_PER_PAGE };
@@ -295,7 +301,7 @@ builder.defineCatalogHandler(async (args) => {
     const start = skip % ITEMS_PER_PAGE;
     const paged = data.results.slice(start, start + ITEMS_PER_PAGE);
     const metas = paged.map(item => ({
-        id: item.id, type: 'movie', name: item.title,
+        id: item.id, type: 'Movie', name: item.title,
         poster: item.poster || BASE_URL + '/favicon.ico', genres: ['JAV']
     }));
     return { metas, hasMore: (data.results.length > start + ITEMS_PER_PAGE) || data.hasMore };
@@ -367,7 +373,7 @@ builder.defineStreamHandler(async (args) => {
                     }
                 }
                 
-                // Fallback cho tất cả magnet (kể cả không có file ngay)
+                // Fallback
                 console.log(`[Stream] ⚠️ Fallback: ${title.substring(0, 40)}`);
                 const streamUrl = `${tsBase}/stream/${encodeURIComponent(title)}?link=${encodeURIComponent(magnetLink)}&index=0&play`;
                 streams.push({
@@ -395,7 +401,7 @@ builder.defineStreamHandler(async (args) => {
         }
     };
 
-    // === 1. FILE .TORRENT TỪ ONEJAV (100% phải lấy) ===
+    // === 1. FILE .TORRENT TỪ ONEJAV ===
     for (const t of (detail?.torrentLinks || [])) {
         if (t.url) {
             await addStream(`OneJAV Torrent`, t.title, t.url, 999, true);
@@ -473,56 +479,320 @@ const server = http.createServer((req, res) => {
             }
         }
         
+        // Avatar SVG đơn giản, nền trong suốt, phong cách hồng
+        const actressSvg = (hairColor, skinColor) => `<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 64 64">
+  <circle cx="32" cy="20" r="10" fill="${skinColor || '#FFD1DC'}"/>
+  <path d="M22 24 Q32 12 42 24" fill="${hairColor || '#FF99BB'}"/>
+  <path d="M20 40 L32 60 L44 40 Z" fill="#FF99BB" opacity="0.8"/>
+  <circle cx="28" cy="18" r="2" fill="#333"/>
+  <circle cx="36" cy="18" r="2" fill="#333"/>
+  <path d="M28 24 Q32 27 36 24" stroke="#333" fill="none" stroke-width="1.5"/>
+</svg>`;
+const actressAvatars = [
+    { name: 'Yui Hatano', img: 'https://www.javdatabase.com/idolimages/full/yui-hatano.webp' },
+    { name: 'Aoi Sora', img: 'https://i.ebayimg.com/images/g/938AAOSwAfVldJTD/s-l1200.webp' },
+    { name: 'Hitomi Tanaka', img: 'https://cdn.prod.website-files.com/604b55671d49be06bbe00910/624dbf80350f7d779c0cedaa_5e5fce49579a534175c1364f_Hitomi-Tanaka-2.jpeg' },
+    { name: 'Maria Ozawa', img: 'https://upload.wikimedia.org/wikipedia/commons/thumb/9/9c/Dasdas_Special_AV_Event_by_LonelyBob_%28Maria_Ozawa_crop%29.jpg/500px-Dasdas_Special_AV_Event_by_LonelyBob_%28Maria_Ozawa_crop%29.jpg' }
+];
+        
+        const actressCards = actressAvatars.map(a => {
+            const imgUrl = a.img;
+            return `<div class="actress-card">
+                <img src="${imgUrl}" alt="${a.name}" class="actress-img" loading="lazy">
+                <span class="actress-name">${a.name}</span>
+            </div>`;
+        }).join('');
+        
         res.setHeader('Content-Type', 'text/html; charset=utf-8');
-        res.end(`
-<!DOCTYPE html>
+        res.end(`<!DOCTYPE html>
 <html lang="vi">
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>🎌 JAV Addon · Cấu hình</title>
+    <title>🌸 JAV Addon · Cấu hình</title>
     <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&display=swap" rel="stylesheet">
     <style>
         * { margin: 0; padding: 0; box-sizing: border-box; }
-        body { font-family: 'Inter', sans-serif; background: #0b0b12; display: flex; align-items: center; justify-content: center; min-height: 100vh; padding: 20px; color: #e9e9f0; }
-        .card { max-width: 560px; width: 100%; background: rgba(22, 25, 35, 0.9); backdrop-filter: blur(8px); -webkit-backdrop-filter: blur(8px); border: 1px solid rgba(255, 255, 255, 0.06); border-radius: 28px; padding: 32px 28px; box-shadow: 0 25px 40px -10px rgba(0, 0, 0, 0.6); }
-        .header { display: flex; align-items: center; gap: 12px; margin-bottom: 28px; }
-        .icon { width: 48px; height: 48px; background: linear-gradient(145deg, #e94560, #b8304f); border-radius: 16px; display: flex; align-items: center; justify-content: center; font-size: 26px; box-shadow: 0 8px 16px rgba(233, 69, 96, 0.2); }
-        h1 { font-size: 26px; font-weight: 700; letter-spacing: -0.5px; background: linear-gradient(to right, #ffffff, #c0c0e0); -webkit-background-clip: text; background-clip: text; color: transparent; }
-        .badge { background: #22d3a5; color: #000; font-size: 11px; font-weight: 700; padding: 2px 8px; border-radius: 20px; margin-left: 8px; }
-        .subtitle { font-size: 14px; color: #8a8aa8; margin-top: -6px; margin-bottom: 28px; border-left: 3px solid #e94560; padding-left: 16px; }
-        .feature-grid { display: grid; grid-template-columns: 1fr 1fr; gap: 12px; margin-bottom: 28px; }
-        .feature-item { background: rgba(255, 255, 255, 0.03); border: 1px solid rgba(255, 255, 255, 0.05); border-radius: 18px; padding: 16px 14px; }
-        .feature-title { font-weight: 600; font-size: 15px; margin-bottom: 6px; display: flex; align-items: center; gap: 6px; }
-        .feature-desc { font-size: 12px; color: #a0a0c0; line-height: 1.4; }
-        .config-section { background: rgba(0, 0, 0, 0.2); border-radius: 22px; padding: 22px 20px; margin-bottom: 24px; border: 1px solid #232334; }
-        .switch-row { display: flex; align-items: center; justify-content: space-between; margin-bottom: 20px; }
-        .switch-label { font-weight: 600; font-size: 16px; }
-        .switch-label small { display: block; font-weight: 400; font-size: 12px; color: #8a8aa8; margin-top: 4px; }
-        .switch { position: relative; display: inline-block; width: 52px; height: 28px; }
+        body {
+            font-family: 'Inter', sans-serif;
+            background: linear-gradient(135deg, #ffe4ec 0%, #ffd1e0 50%, #ffc0d5 100%);
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            min-height: 100vh;
+            padding: 20px;
+            color: #4a3040;
+        }
+        .card {
+            max-width: 600px;
+            width: 100%;
+            background: rgba(255, 255, 255, 0.75);
+            backdrop-filter: blur(20px);
+            -webkit-backdrop-filter: blur(20px);
+            border: 1px solid rgba(255, 105, 180, 0.2);
+            border-radius: 32px;
+            padding: 36px 30px;
+            box-shadow: 0 30px 50px rgba(255, 105, 180, 0.15);
+        }
+        .header {
+            display: flex;
+            align-items: center;
+            gap: 14px;
+            margin-bottom: 18px;
+        }
+        .icon {
+            width: 52px;
+            height: 52px;
+            background: linear-gradient(145deg, #ff8da1, #ff5e7e);
+            border-radius: 18px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            font-size: 28px;
+            box-shadow: 0 10px 20px rgba(255, 94, 126, 0.3);
+        }
+        h1 {
+            font-size: 28px;
+            font-weight: 700;
+            letter-spacing: -0.5px;
+            color: #cc3366;
+        }
+        .badge {
+            background: #ff8da1;
+            color: white;
+            font-size: 12px;
+            font-weight: 700;
+            padding: 3px 10px;
+            border-radius: 20px;
+            margin-left: 10px;
+            letter-spacing: 0.5px;
+        }
+        .subtitle {
+            font-size: 15px;
+            color: #b34e6b;
+            margin-bottom: 16px;
+            border-left: 4px solid #ff5e7e;
+            padding-left: 18px;
+            font-weight: 500;
+        }
+        .actress-section {
+            margin-bottom: 24px;
+        }
+        .actress-label {
+            font-weight: 600;
+            font-size: 14px;
+            margin-bottom: 10px;
+            color: #cc3366;
+            display: flex;
+            align-items: center;
+            gap: 6px;
+        }
+        .actress-grid {
+            display: flex;
+            gap: 16px;
+            justify-content: center;
+            flex-wrap: wrap;
+        }
+        .actress-card {
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            gap: 6px;
+        }
+        .actress-img {
+            width: 64px;
+            height: 64px;
+            border-radius: 50%;
+            background: rgba(255, 255, 255, 0.7);
+            backdrop-filter: blur(4px);
+            border: 2px solid #ffb6c1;
+            box-shadow: 0 6px 12px rgba(255, 105, 180, 0.2);
+            transition: transform 0.2s;
+        }
+        .actress-card:hover .actress-img {
+            transform: scale(1.05);
+            border-color: #ff5e7e;
+        }
+        .actress-name {
+            font-size: 12px;
+            font-weight: 500;
+            color: #7a4055;
+            text-align: center;
+            max-width: 80px;
+        }
+        .feature-grid {
+            display: grid;
+            grid-template-columns: 1fr 1fr;
+            gap: 12px;
+            margin-bottom: 28px;
+        }
+        .feature-item {
+            background: rgba(255, 255, 255, 0.5);
+            border: 1px solid rgba(255, 105, 180, 0.15);
+            border-radius: 20px;
+            padding: 18px 16px;
+            backdrop-filter: blur(10px);
+        }
+        .feature-title {
+            font-weight: 600;
+            font-size: 15px;
+            margin-bottom: 6px;
+            display: flex;
+            align-items: center;
+            gap: 6px;
+            color: #cc3366;
+        }
+        .feature-desc {
+            font-size: 12px;
+            color: #8a6070;
+            line-height: 1.5;
+        }
+        .config-section {
+            background: rgba(255, 240, 245, 0.8);
+            border-radius: 24px;
+            padding: 24px 22px;
+            margin-bottom: 26px;
+            border: 1px solid rgba(255, 105, 180, 0.25);
+        }
+        .switch-row {
+            display: flex;
+            align-items: center;
+            justify-content: space-between;
+            margin-bottom: 20px;
+        }
+        .switch-label {
+            font-weight: 600;
+            font-size: 16px;
+            color: #b34e6b;
+        }
+        .switch-label small {
+            display: block;
+            font-weight: 400;
+            font-size: 12px;
+            color: #b37085;
+            margin-top: 4px;
+        }
+        .switch {
+            position: relative;
+            display: inline-block;
+            width: 52px;
+            height: 28px;
+        }
         .switch input { opacity: 0; width: 0; height: 0; }
-        .slider { position: absolute; cursor: pointer; top: 0; left: 0; right: 0; bottom: 0; background-color: #2a2a40; transition: .2s; border-radius: 34px; }
-        .slider:before { position: absolute; content: ""; height: 22px; width: 22px; left: 3px; bottom: 3px; background-color: white; transition: .2s; border-radius: 50%; }
-        input:checked + .slider { background: linear-gradient(145deg, #e94560, #b8304f); }
-        input:checked + .slider:before { transform: translateX(24px); }
-        .input-group { margin-top: 8px; }
-        .input-group label { display: block; font-size: 13px; font-weight: 500; margin-bottom: 8px; color: #b0b0d0; }
-        .input-field { width: 100%; padding: 14px 18px; background: #0f0f1a; border: 1.5px solid #2a2a45; border-radius: 20px; font-size: 14px; color: #fff; outline: none; font-family: 'Inter', monospace; }
-        .input-field:focus { border-color: #e94560; box-shadow: 0 0 0 3px rgba(233, 69, 96, 0.15); }
-        .url-box { background: #0b0b16; border: 1px dashed #4a4a70; border-radius: 18px; padding: 18px; margin: 24px 0 20px; word-break: break-all; font-family: 'SF Mono', 'Menlo', monospace; font-size: 13px; color: #b0d0ff; }
-        .button-group { display: flex; gap: 12px; }
-        .btn { flex: 1; padding: 16px 0; border: none; border-radius: 40px; font-weight: 600; font-size: 16px; cursor: pointer; background: #232338; color: #e0e0f0; border: 1px solid #3a3a60; }
-        .btn-primary { background: linear-gradient(145deg, #e94560, #c02b4a); border: none; color: white; box-shadow: 0 10px 18px -6px rgba(233, 69, 96, 0.3); }
-        .note { margin-top: 20px; font-size: 12px; color: #70708c; text-align: center; }
+        .slider {
+            position: absolute;
+            cursor: pointer;
+            top: 0; left: 0; right: 0; bottom: 0;
+            background-color: #ffccd5;
+            transition: .2s;
+            border-radius: 34px;
+        }
+        .slider:before {
+            position: absolute;
+            content: "";
+            height: 22px;
+            width: 22px;
+            left: 3px;
+            bottom: 3px;
+            background-color: white;
+            transition: .2s;
+            border-radius: 50%;
+            box-shadow: 0 2px 4px rgba(0,0,0,0.1);
+        }
+        input:checked + .slider {
+            background: linear-gradient(145deg, #ff8da1, #ff5e7e);
+        }
+        input:checked + .slider:before {
+            transform: translateX(24px);
+        }
+        .input-group {
+            margin-top: 8px;
+        }
+        .input-group label {
+            display: block;
+            font-size: 13px;
+            font-weight: 500;
+            margin-bottom: 8px;
+            color: #a34460;
+        }
+        .input-field {
+            width: 100%;
+            padding: 14px 18px;
+            background: rgba(255, 255, 255, 0.8);
+            border: 1.5px solid #ffb6c1;
+            border-radius: 20px;
+            font-size: 14px;
+            color: #4a3040;
+            outline: none;
+            font-family: 'Inter', monospace;
+            backdrop-filter: blur(10px);
+            transition: border 0.2s;
+        }
+        .input-field:focus {
+            border-color: #ff5e7e;
+            box-shadow: 0 0 0 4px rgba(255, 94, 126, 0.1);
+        }
+        .url-box {
+            background: rgba(255, 255, 255, 0.7);
+            border: 1px dashed #ff8da1;
+            border-radius: 20px;
+            padding: 20px;
+            margin: 24px 0 20px;
+            word-break: break-all;
+            font-family: 'SF Mono', 'Menlo', monospace;
+            font-size: 13px;
+            color: #cc3366;
+        }
+        .button-group {
+            display: flex;
+            gap: 12px;
+        }
+        .btn {
+            flex: 1;
+            padding: 16px 0;
+            border: none;
+            border-radius: 40px;
+            font-weight: 600;
+            font-size: 16px;
+            cursor: pointer;
+            background: #ffe4ec;
+            color: #cc3366;
+            border: 1px solid #ffb6c1;
+            transition: all 0.2s;
+        }
+        .btn-primary {
+            background: linear-gradient(145deg, #ff8da1, #ff5e7e);
+            border: none;
+            color: white;
+            box-shadow: 0 12px 20px -8px rgba(255, 94, 126, 0.4);
+        }
+        .btn-primary:hover {
+            box-shadow: 0 15px 25px -6px rgba(255, 94, 126, 0.5);
+            transform: translateY(-2px);
+        }
+        .note {
+            margin-top: 22px;
+            font-size: 12px;
+            color: #b37a8c;
+            text-align: center;
+        }
     </style>
 </head>
 <body>
     <div class="card">
         <div class="header">
-            <div class="icon">🎌</div>
+            <div class="icon">🌸</div>
             <h1>JAV Addon <span class="badge">v6.0.1</span></h1>
         </div>
         <div class="subtitle">⚡ OneJAV + Sukebei + iJavTorrent · Cân bằng</div>
+        
+        <div class="actress-section">
+            <div class="actress-label">🌟 Diễn viên nổi bật</div>
+            <div class="actress-grid">
+                ${actressCards}
+            </div>
+        </div>
+        
         <div class="feature-grid">
             <div class="feature-item"><div class="feature-title">🔍 Tìm kiếm</div><div class="feature-desc">Tìm trực tiếp trên OneJAV.</div></div>
             <div class="feature-item"><div class="feature-title">🏷️ Nhiều Tags</div><div class="feature-desc">Big Tits, Creampie, Anal...</div></div>
@@ -543,11 +813,11 @@ const server = http.createServer((req, res) => {
         <div id="urlContainer" style="display: none;">
             <div class="url-box" id="urlText"></div>
             <div class="button-group">
-                <button class="btn btn-secondary" onclick="copyUrl()">📋 Copy Link</button>
+                <button class="btn" onclick="copyUrl()">📋 Copy Link</button>
                 <button class="btn btn-primary" onclick="installAddon()">💾 Cài vào Stremio</button>
             </div>
         </div>
-        <div class="note">✅ Retry 2 lần · Fallback cho mọi magnet · Bỏ qua 0 seed (trừ OneJAV Torrent)</div>
+        <div class="note">🌸 Retry 2 lần · Fallback cho mọi magnet · Bỏ qua 0 seed (trừ OneJAV Torrent)</div>
     </div>
     <script>
         const baseManifest = '${baseUrl}/manifest.json';
@@ -559,7 +829,7 @@ const server = http.createServer((req, res) => {
             const params = new URLSearchParams();
             if (enabled) {
                 params.set('tsEnabled', 'true');
-                params.set('tsAddress', encodeURIComponent(address));
+                if (address) params.set('tsAddress', encodeURIComponent(address));
             } else {
                 params.set('tsEnabled', 'false');
             }
@@ -585,8 +855,7 @@ const server = http.createServer((req, res) => {
         window.onload = generateAndShow;
     </script>
 </body>
-</html>
-        `);
+</html>`);
         return;
     }
 
@@ -603,7 +872,7 @@ server.listen(PORT, '0.0.0.0', () => {
     console.log(`✅ JAV Addon v6.0.1 chạy tại http://0.0.0.0:${PORT}`);
     console.log(`📋 Manifest: http://127.0.0.1:${PORT}/manifest.json`);
     console.log(`⚙️  Cấu hình: http://127.0.0.1:${PORT}/configure`);
-    console.log(`📡 TorrServer mặc định: ${torrServerAddress}`);
+    console.log(`📡 TorrServer: TẮT mặc định (người dùng tự điền nếu cần)`);
     console.log(`⚡ Sources: OneJAV + Sukebei + iJavTorrent`);
     console.log(`⚖️ Balanced mode: Retry 2 lần, luôn fallback`);
 });
