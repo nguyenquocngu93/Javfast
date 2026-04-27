@@ -231,8 +231,8 @@ builder.defineCatalogHandler(async (args) => {
 
     const page = Math.floor(skip / ITEMS_PER_PAGE) + 1;
     if (!catalogId.startsWith('jav-tag-')) return { metas: [], hasMore: false };
-    let tag = catalogId.replace('jav-tag-', '').replace(/-/g, ' ');
-    tag = tag.split(' ').map(w => w.charAt(0).toUpperCase() + w.slice(1)).join(' ');
+    let tag = catalogId.replace('jav-tag-', '');
+    if (tag === 'ultra-huge-tits') { tag = 'Ultra-Huge Tits'; } else { tag = tag.split('-').map(w => w.charAt(0).toUpperCase() + w.slice(1)).join(' '); }
     const data = await fetchTagPage(tag, page);
     if (!data?.results?.length) return { metas: [], hasMore: false };
     const start = skip % ITEMS_PER_PAGE;
